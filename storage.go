@@ -36,10 +36,10 @@ func NewPostgresStore() (*PostgresStore, error) {
 }
 
 func (s *PostgresStore) Init() error {
-	return s.CreateAccountTable()
+	return s.createAccountTable()
 }
 
-func (s *PostgresStore) CreateAccountTable() error {
+func (s *PostgresStore) createAccountTable() error {
 	query := `
 		CREATE TABLE IF NOT EXISTS account (
 			id SERIAL PRIMARY KEY,
@@ -89,18 +89,10 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 	accounts := []*Account{}
 	for rows.Next() {
-		account := &Account{}
-		err := rows.Scan(
-			&account.ID,
-			&account.FirstName,
-			&account.LastName,
-			&account.Number,
-			&account.Balance,
-			&account.CreatedAt)
+		account, err := scanIntoAccount(rows)
 		if err != nil {
 			return nil, err
 		}
-
 		accounts = append(accounts, account)
 	}
 
@@ -109,4 +101,16 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 func (s *PostgresStore) GetAccountByID(id int) (*Account, error) {
 	return nil, nil
+}
+
+func scanIntoAccount(rows *sql.Rows) (*Account, error) {
+	account := &Account{}
+	err := rows.Scan(
+		&account.ID,
+		&account.FirstName,
+		&account.LastName,
+		&account.Number,
+		&account.Balance,
+		&account.CreatedAt)
+	return account, err
 }
