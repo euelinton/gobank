@@ -26,6 +26,7 @@ func (s *APIServer) Run() {
 	router := mux.NewRouter()
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleGetAccountByID))
+	router.HandleFunc("/transfer", makeHTTPHandleFunc(s.handleTransfer))
 
 	log.Println("JSON API server running on port: ", s.listenAddr)
 
@@ -78,6 +79,8 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
+	defer r.Body.Close()
+
 	account := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
 	if err := s.store.CreateAccount(account); err != nil {
 		return err
@@ -98,7 +101,14 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	transferReq := &TransferReq{}
+	if err := json.NewDecoder(r.Body).Decode(transferReq); err != nil {
+		return err
+	}
+
+	defer r.Body.Close()
+
+	return WriteJSON(w, http.StatusOK, transferReq)
 }
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
